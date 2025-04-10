@@ -1,0 +1,79 @@
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+const img = new Image();
+img.src = 'https://eoimages.gsfc.nasa.gov/images/imagerecords/0/885/modis_wonderglobe_lrg.jpg'; // Proper working URL
+
+let angleX = 0;
+let angleY = 0;
+let radius = 250; // Adjusted for fitting inside the canvas
+let scale = 1;
+let zoom = 1;
+let rotationSpeed = 0.005;
+let glowIntensity = 30;
+let lastMouseX = 0;
+let lastMouseY = 0;
+let dragging = false;
+
+document.getElementById('speed').addEventListener('input', (event) => {
+  rotationSpeed = parseFloat(event.target.value);
+});
+
+document.getElementById('glow').addEventListener('input', (event) => {
+  glowIntensity = parseInt(event.target.value);
+});
+
+img.onload = () => {
+  animateGlobe(); // Start the animation once the image has loaded
+};
+
+function drawGlobe() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+
+  ctx.translate(canvas.width / 2, canvas.height / 2);
+
+  ctx.rotate(angleX); // Rotate along X-axis
+  ctx.rotate(angleY); // Rotate along Y-axis
+
+  ctx.scale(scale * zoom, scale * zoom);
+
+  ctx.shadowColor = 'rgba(0, 204, 255, 0.7)';
+  ctx.shadowBlur = glowIntensity;
+
+  ctx.drawImage(img, -radius, -radius, 2 * radius, 2 * radius);
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+function animateGlobe() {
+  angleX += rotationSpeed;
+  angleY += rotationSpeed;
+  drawGlobe();
+  requestAnimationFrame(animateGlobe);
+}
+
+canvas.addEventListener('wheel', (event) => {
+  zoom += event.deltaY * -0.001; // Adjust zoom level based on mouse wheel movement
+  zoom = Math.max(0.5, Math.min(zoom, 3)); // Limit zoom levels between 0.5 and 3
+});
+
+canvas.addEventListener('mousedown', (event) => {
+  dragging = true;
+  lastMouseX = event.clientX;
+  lastMouseY = event.clientY;
+});
+
+canvas.addEventListener('mouseup', () => {
+  dragging = false;
+});
+
+canvas.addEventListener('mousemove', (event) => {
+  if (dragging) {
+    const dx = event.clientX - lastMouseX;
+    const dy = event.clientY - lastMouseY;
+    angleX += dy * 0.005;
+    angleY += dx * 0.005;
+    lastMouseX = event.clientX;
+    lastMouseY = event.clientY;
+  }
+});
